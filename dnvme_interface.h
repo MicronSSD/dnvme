@@ -330,6 +330,8 @@ struct interrupts {
  */
 struct public_metrics_dev {
     struct interrupts irq_active;  /* Active IRQ state of the nvme device */
+    uint8_t pci_bus;               /* added to support AMP */
+    uint8_t pci_device_function;
 };
 
 /**

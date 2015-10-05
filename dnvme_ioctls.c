@@ -900,7 +900,6 @@ int driver_send_64b(struct metrics_device_list *pmetrics_device,
     struct nvme_prps prps; /* Pointer to PRP List */
     struct nvme_64b_send *user_data = NULL;
 
-
     /* Allocating memory for user struct in kernel space */
     user_data = kmalloc(sizeof(struct nvme_64b_send), GFP_KERNEL);
     if (user_data == NULL) {
@@ -989,7 +988,6 @@ int driver_send_64b(struct metrics_device_list *pmetrics_device,
     if ((user_data->q_id == 0) && (nvme_gen_cmd->opcode == 0x01)) {
         /* Create IOSQ command */
         nvme_create_sq = (struct nvme_create_sq *) nvme_cmd_ker;
-
         /* Get the required SQ from the global linked list from CMD.DW10.QID */
         list_for_each_entry(p_cmd_sq, &pmetrics_device->metrics_sq_list,
             sq_list_hd) {
@@ -1060,7 +1058,6 @@ int driver_send_64b(struct metrics_device_list *pmetrics_device,
     } else if ((user_data->q_id == 0) && (nvme_gen_cmd->opcode == 0x05)) {
         /* Create IOCQ command */
         nvme_create_cq = (struct nvme_create_cq *) nvme_cmd_ker;
-
         /* Get the required CQ from the global linked list
          * represented by CMD.DW10.QID */
         list_for_each_entry(p_cmd_cq, &pmetrics_device->metrics_cq_list,
@@ -1238,7 +1235,7 @@ free_out:
     if (user_data != NULL) {
         kfree(user_data);
     }
-    LOG_DBG("Sending of command failed");
+    LOG_ERR("Sending of command failed");
     return err;
 }
 

@@ -262,11 +262,14 @@ static int dnvme_probe(struct pci_dev *pdev, const struct pci_device_id *id)
     }
 
     /* Finalize this device and prepare for next one */
-    LOG_DBG("NVMe dev: 0x%x, vendor: 0x%x", pdev->device, pdev->vendor);
-    LOG_DBG("NVMe bus #%d, dev slot: %d", pdev->bus->number,
+    LOG_ERR("NVMe dev: 0x%x, vendor: 0x%x", pdev->device, pdev->vendor);
+    LOG_ERR("NVMe bus #%d, dev slot: %d", pdev->bus->number,
         PCI_SLOT(pdev->devfn));
     LOG_DBG("NVMe func: 0x%x, class: 0x%x", PCI_FUNC(pdev->devfn),
         pdev->class);
+    pmetrics_device->metrics_device->public_dev.pci_bus = pdev->bus->number;
+    pmetrics_device->metrics_device->public_dev.pci_device_function = 
+        pdev->devfn;
     list_add_tail(&pmetrics_device->metrics_device_hd, &metrics_dev_ll);
     nvme_minor++;
     return 0;
@@ -679,10 +682,10 @@ long dnvme_ioctl(struct file *filp, unsigned int ioctl_num,
         }
 
         if (create_admn_q->type == ADMIN_SQ) {
-            LOG_DBG("Create ASQ");
+            LOG_DBG("Create ASQ size %u", create_admn_q->elements);
             err = driver_create_asq(create_admn_q, pmetrics_device);
         } else if (create_admn_q->type == ADMIN_CQ) {
-            LOG_DBG("Create ACQ");
+            LOG_DBG("Create ACQ size %u", create_admn_q->elements);
             err = driver_create_acq(create_admn_q, pmetrics_device);
         } else {
             LOG_ERR("Unknown Q type specified");
@@ -719,13 +722,20 @@ long dnvme_ioctl(struct file *filp, unsigned int ioctl_num,
         break;
 
     case NVME_IOCTL_PREPARE_SQ_CREATION:
-        LOG_DBG("NVME_IOCTL_PREPARE_SQ_CREATION");
+        LOG_DBG("NVME_IOCTL_PREPARE_SQ_CREATION sqid %u, cqid %u, elem %u, contig %u",
+            ((struct nvme_prep_sq *)ioctl_param)->sq_id,
+            ((struct nvme_prep_sq *)ioctl_param)->cq_id,
+            ((struct nvme_prep_sq *)ioctl_param)->elements,
+            ((struct nvme_prep_sq *)ioctl_param)->contig);
         err = driver_nvme_prep_sq((struct nvme_prep_sq *)ioctl_param,
             pmetrics_device);
         break;
 
     case NVME_IOCTL_PREPARE_CQ_CREATION:
-        LOG_DBG("NVME_IOCTL_PREPARE_CQ_CREATION");
+        LOG_DBG("NVME_IOCTL_PREPARE_CQ_CREATION cqid %u, elem %u, contig %u", 
+                ((struct nvme_prep_cq *)ioctl_param)->cq_id,
+                ((struct nvme_prep_cq *)ioctl_param)->elements,
+                ((struct nvme_prep_cq *)ioctl_param)->contig);
         err = driver_nvme_prep_cq((struct nvme_prep_cq *)ioctl_param,
             pmetrics_device);
         break;
