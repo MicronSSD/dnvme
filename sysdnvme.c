@@ -304,11 +304,12 @@ fail_out:
 static void dnvme_remove(struct pci_dev *dev)
 {
     struct pci_dev *pdev;
-    struct metrics_device_list *pmetrics_device;
+    struct metrics_device_list *pmetrics_device, *pmetrics_device_next;
 
 
     /* Loop through the devices available in the metrics list */
-    list_for_each_entry(pmetrics_device, &metrics_dev_ll, metrics_device_hd) {
+    list_for_each_entry_safe(pmetrics_device, pmetrics_device_next,
+            &metrics_dev_ll, metrics_device_hd) {
 
         pdev = pmetrics_device->metrics_device->private_dev.pdev;
         if (pdev == dev) {
@@ -319,6 +320,8 @@ static void dnvme_remove(struct pci_dev *dev)
                 PCI_SLOT(pdev->devfn));
             LOG_DBG("PCIe func: 0x%x, class: 0x%x", PCI_FUNC(pdev->devfn),
                 pdev->class);
+
+            list_del(&pmetrics_device->metrics_device_hd);
 
             /* Wait for any other dnvme access to finish, then stop further
              * before we free resources to prevent circular issues */
@@ -354,12 +357,9 @@ static void dnvme_remove(struct pci_dev *dev)
             mutex_destroy(&pmetrics_device->irq_process.irq_track_mtx);
 
             device_del(pmetrics_device->metrics_device->private_dev.spcl_dev);
-        }
-    }
 
-    /* Free up the device linked list if there are not items left */
-    if (list_empty(&metrics_dev_ll)) {
-        list_del(&metrics_dev_ll);
+            kfree(pmetrics_device);
+        }
     }
 }
 
