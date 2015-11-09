@@ -17,7 +17,6 @@
 #
 
 # Modify the Makefile to point to Linux build tree.
-DIST ?= $(shell uname -r)
 KDIR:=/lib/modules/$(DIST)/build/
 CDIR:=/usr/src/linux-source-3.5.0-generic/debian/scripts/
 SOURCE:=$(shell pwd)
@@ -42,17 +41,6 @@ SOURCES := \
 	dnvme_ds.c \
 	dnvme_irq.c
 
-#
-# RPM build parameters
-#
-RPMBASE=$(DRV_NAME)
-MAJOR=$(shell awk 'FNR==29' $(PWD)/version.h)
-MINOR=$(shell awk 'FNR==32' $(PWD)/version.h)
-SOFTREV=$(MAJOR).$(MINOR)
-RPMFILE=$(RPMBASE)-$(SOFTREV)
-RPMCOMPILEDIR=$(PWD)/rpmbuild
-RPMSRCFILE=$(PWD)/$(RPMFILE)
-RPMSPECFILE=$(RPMBASE).spec
 SRCDIR?=./src
 
 obj-m := dnvme.o
@@ -67,10 +55,6 @@ clean:
 	make -C $(KDIR) M=$(PWD) clean
 	rm -f doxygen.log
 	rm -rf $(SRCDIR)
-	rm -rf $(RPMFILE)
-	rm -rf $(RPMCOMPILEDIR)
-	rm -rf $(RPMSRCFILE)
-	rm -f $(RPMSRCFILE).tar*
 
 clobber: clean
 	rm -rf Doc/HTML
@@ -98,18 +82,4 @@ ifeq '$(DESTDIR)' ''
 	/sbin/depmod -a
 endif
 
-rpmzipsrc: SRCDIR:=$(RPMFILE)
-rpmzipsrc: clobber src
-	rm -f $(RPMSRCFILE).tar*
-	tar cvf $(RPMSRCFILE).tar $(RPMFILE)
-	gzip $(RPMSRCFILE).tar
-
-rpmbuild: rpmzipsrc
-	# Build the RPM and then copy the results local
-	./build.sh $(RPMCOMPILEDIR) $(RPMSPECFILE) $(RPMSRCFILE)
-	rm -rf ./rpm
-	mkdir ./rpm
-	cp -p $(RPMCOMPILEDIR)/RPMS/x86_64/*.rpm ./rpm
-	cp -p $(RPMCOMPILEDIR)/SRPMS/*.rpm ./rpm
-
-.PHONY: all clean clobber doc src install rpmzipsrc rpmbuild
+.PHONY: all clean clobber doc src install

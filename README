@@ -1,5 +1,48 @@
-This is the dnvm repository in the Nvme Compliance project.
+MICRON INFORMATION
+==================
 
-This repo contains the Linux driver for the NVMe Compliance Suite.
+Repo location:
+    https://stash.micron.com/stash/scm/lnxnvme/dnvme.git
 
-Contact compliance@nvmexpress.org for more information.
+This is a fork of the following repo:
+    https://github.com/nvmecompliance/dnvme
+    
+Contacts
+--------
+Chad Patel
+Adam Mateen
+Michael Schoberg
+Robert Randall
+    
+Main Changes from Upstream
+--------------------------
+    - Add PCI B.D.F. in metrics_device->public_dev. So that it is available to user through IOCTL_GET_DEVICE_METRICS. (change for AMP)
+    - Fix memory leak and memory corruption issue in dnvme when a device is removed and then re-probed (using unbind and bind).
+    - Port fix from NVMEX project. Fixes incrementing in driver_generic_write().
+    - Convert to DKMS build that produces a deb package, the old makefile only build is now intentionally broken.
+    
+Deb Package Location
+--------------------
+The most recently released deb package can be found here:
+    wdlabfs1.micron.com/releases/Test-Stack-Releases/linux
+    
+TODO: Micron ppa server information
+    
+DKMS Build Steps (NOTE: Non-dkms build is intentionally broken!)
+----------------------------------------------------------------
+    - sudo apt-get install debhelper dkms
+    - Increment the minor version number in version.h, keep note of the new version #
+    - Update the version number in dkms.conf to match the version in version.h
+    - sudo ln -s {full dnvme path} /usr/src/dnvme-{MAJOR}.{MINOR} 
+        example: sudo ln -s /home/wdlab/dnvme /usr/src/dnvme-3.0
+    - sudo dkms add -m dnvme -v {MAJOR}.{MINOR}
+        example: sudo dkms add -m dnvme -v 3.0
+    - sudo dkms build -m dnvme -v {MAJOR}.{MINOR}
+        example: sudo dkms build -m dnvme -v 3.0
+    - sudo dkms mkdeb -m dnvme -v {MAJOR}.{MINOR}
+        example: sudo dkms mkdeb -m dnvme -v 3.0
+    - Observe the output for the location of the deb package, it is should be here:
+        /var/lib/dkms/dnvme/{MAJOR}.{MINOR}/deb
+    - If you need to install the package, use "dpkg -i" to install
+    - Assuming everything was successful, commit the modified dkms.conf and version.h files
+    
