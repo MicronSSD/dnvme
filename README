@@ -2,7 +2,7 @@ MICRON INFORMATION
 ==================
 
 Repo location:
-    https://stash.micron.com/stash/scm/lnxnvme/dnvme.git
+    https://stash.micron.com/stash/scm/nve_tsw/dnvme.git
 
 This is a fork of the following repo:
     https://github.com/nvmecompliance/dnvme
@@ -37,6 +37,9 @@ DKMS Build Steps
     - sudo apt-get install debhelper dkms
     - checkout the repo into a clean directory
     - increment the minor version number in version.h, keep note of the new version #
+    - update debian\changelog file with change messages and release notes
+      where {MAJOR} and {MINOR} are the new version you would like to use
+        - dch -v {MAJOR}.{MINOR}-1
     - create an orig tar.gz file with all of the contents of the dnvme directory excluding debian
         e.g.: dnvme_{MAJOR}.{MINOR}.orig.tar.gz
     - place the orig tar.gz in the parent directory to dnvme
@@ -51,4 +54,5 @@ DKMS Build Steps
     - On the package server (currently named 'wdlapppa' on the lab network)
         - locate the packages and use the command 'sudo dput local dnvme_{MAJOR}.{MINOR}-1_amd64.changes' to get them added to the package server
         - verify the packages are in ~/archive/trusty
+    - assuming everything was successfull, commit and push your changes to git
         
