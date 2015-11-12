@@ -19,30 +19,36 @@ Main Changes from Upstream
     - Add PCI B.D.F. in metrics_device->public_dev. So that it is available to user through IOCTL_GET_DEVICE_METRICS. (change for AMP)
     - Fix memory leak and memory corruption issue in dnvme when a device is removed and then re-probed (using unbind and bind).
     - Port fix from NVMEX project. Fixes incrementing in driver_generic_write().
-    - Convert to DKMS build that produces a deb package, the old makefile only build is now intentionally broken.
+    - Convert to DKMS build that produces a deb package, the old makefile only build is now intentionally broken.  You can use Makefile.dev if you need to use the original makefile for development.
     
-Deb Package Location
---------------------
-The most recently released deb package can be found here:
-    wdlabfs1.micron.com/releases/Test-Stack-Releases/linux
+Installation Instructions [Trusty/14.04 only]
+---------------------------------------------
+    - add the following line to /etc/apt/sources.list
+        deb http://10.113.22.79 trusty/
+    - sudo apt-get update
+    - sudo apt-get install dnvme-dkms
+    - The package can be removed at any time with apt-get remove dnvme-dkms
     
-TODO: Micron ppa server information
-    
-DKMS Build Steps (NOTE: Non-dkms build is intentionally broken!)
-----------------------------------------------------------------
+DKMS Build Steps 
+----------------
+    [NOTE: Trusty/14.04 only]
+    [NOTE: Non-dkms build is intentionally broken!]
+
     - sudo apt-get install debhelper dkms
-    - Increment the minor version number in version.h, keep note of the new version #
-    - Update the version number in dkms.conf to match the version in version.h
-    - sudo ln -s {full dnvme path} /usr/src/dnvme-{MAJOR}.{MINOR} 
-        example: sudo ln -s /home/wdlab/dnvme /usr/src/dnvme-3.0
-    - sudo dkms add -m dnvme -v {MAJOR}.{MINOR}
-        example: sudo dkms add -m dnvme -v 3.0
-    - sudo dkms build -m dnvme -v {MAJOR}.{MINOR}
-        example: sudo dkms build -m dnvme -v 3.0
-    - sudo dkms mkdeb -m dnvme -v {MAJOR}.{MINOR}
-        example: sudo dkms mkdeb -m dnvme -v 3.0
-    - Observe the output for the location of the deb package, it is should be here:
-        /var/lib/dkms/dnvme/{MAJOR}.{MINOR}/deb
-    - If you need to install the package, use "dpkg -i" to install
-    - Assuming everything was successful, commit the modified dkms.conf and version.h files
-    
+    - checkout the repo into a clean directory
+    - increment the minor version number in version.h, keep note of the new version #
+    - create an orig tar.gz file with all of the contents of the dnvme directory excluding debian
+        e.g.: dnvme_{MAJOR}.{MINOR}.orig.tar.gz
+    - place the orig tar.gz in the parent directory to dnvme
+    - run 'dpkg-buildpackage' in the dnvme directory
+    - This should yield the following outputs in the parent directory:
+        dnvme_{MAJOR}.{MINOR}-1_amd64.changes
+        dnvme_{MAJOR}.{MINOR}-1.debian.tar.gz
+        dnvme_{MAJOR}.{MINOR}-1.dsc
+        dnvme_{MAJOR}.{MINOR}.orig.tar.gz
+        dnvme-dkms_{MAJOR}.{MINOR}-1_all.deb
+    - Copy these over to a staging area on wdlabfs1 in a folder named 'dnvme_3.2-1'
+    - On the package server (currently named 'wdlapppa' on the lab network)
+        - locate the packages and use the command 'sudo dput local dnvme_{MAJOR}.{MINOR}-1_amd64.changes' to get them added to the package server
+        - verify the packages are in ~/archive/trusty
+        

@@ -1,0 +1,63 @@
+#!/usr/bin/make -f
+version := $(shell dpkg-parsechangelog | sed -n 's/^Version: *\([^-]\+\)-.\+/\1/p')
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+build: build-indep
+
+build-indep: build-indep-stamp
+build-indep-stamp:
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+
+	dh_clean build-indep-stamp debian/dnvme-dkms.dkms
+
+debian/dnvme-dkms.dkms: debian/dnvme-dkms.dkms.in
+	sed s/@VERSION@/$(version)/g $< > $@
+
+install: install-indep
+
+install-indep: build-indep debian/dnvme-dkms.dkms
+	dh_testdir
+	dh_testroot
+	dh_clean -k -i
+	dh_installdirs -i
+	dh_install -i
+
+	install -D -m 0755 debian/rules.modules \
+		debian/tmp/modules/dnvme/debian/rules
+
+	for f in *.modules.in control compat copyright changelog; do \
+		install -m 0644 debian/$$f \
+			debian/tmp/modules/dnvme/debian/; \
+	done
+
+	install Makefile *.[chS] \
+		debian/tmp/modules/dnvme/
+
+	mkdir -p debian/dnvme-source/usr/src/
+	tar jcf debian/dnvme-source/usr/src/dnvme.tar.bz2 \
+		-C debian/tmp modules
+
+	# Create the dnvme-dkms package.
+	dh_install -pdnvme-dkms Makefile usr/src/dnvme-$(version)
+	dh_install -pdnvme-dkms *.[chS]  usr/src/dnvme-$(version)
+	dh_dkms -pdnvme-dkms
+
+binary-indep: build-indep install-indep
+	dh_testdir -i
+	dh_testroot -i
+	dh_installman -i
+	dh_installdocs -i
+	dh_compress -i
+	dh_fixperms -i
+	dh_installdeb -i
+	dh_gencontrol -i
+	dh_md5sums -i
+	dh_builddeb -i
+
+binary: binary-indep 
+.PHONY: build build-indep clean install install-indep binary-indep binary

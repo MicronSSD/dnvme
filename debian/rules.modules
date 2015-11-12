@@ -1,0 +1,31 @@
+#!/usr/bin/make -f
+
+# module-assistant stuff
+PACKAGE = dnvme-modules
+MA_DIR ?= /usr/share/modass
+-include $(MA_DIR)/include/generic.make
+-include $(MA_DIR)/include/common-rules.make
+
+kdist_clean: prep-deb-files
+	dh_clean
+	$(MAKE) clean KBUILD=$(KSRC) KVERS=$(KVERS)
+
+kdist_config: prep-deb-files
+
+binary-modules: kdist_config
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs lib/modules/$(KVERS)/misc
+	# build and install the module
+	$(MAKE) -C $(CURDIR) install KBUILD=$(KSRC) KVERS=$(KVERS) \
+		DIST_DESTDIR=debian/$(PKGNAME)/
+	dh_installdocs
+	dh_installchangelogs
+	dh_installmodules
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol -- -v$(VERSION)
+	dh_md5sums
+	dh_builddeb --destdir=$(DEB_DESTDIR)

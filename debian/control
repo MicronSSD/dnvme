@@ -1,0 +1,19 @@
+Source: dnvme
+Section: micron
+Priority: optional
+Maintainer: Chad Patel <cdpatel@micron.com>
+Standards-Version: 3.9.5
+Build-Depends: debhelper (>= 5), bzip2, dkms
+Homepage: https://stash.micron.com/stash/scm/lnxnvme/dnvme.git
+
+Package: dnvme-dkms
+Architecture: all
+Section: kernel
+Depends: ${misc:Depends}
+Description: Source for the dnvme Linux kernel module (DKMS)
+ This is the Linux driver for the NVMe Compliance Suite with Micron modifications.
+ The upstream source is available here: 
+ https://github.com/nvmecompliance/dnvme
+ .
+ This package provides the source code for dnvme kernel module to be
+ build with dkms.

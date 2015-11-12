@@ -27,9 +27,13 @@
 
 #include "dnvme_interface.h"
 
-/* 0.0.01 */
-#define    DRIVER_VERSION           0x00000001
-#define    DRIVER_VERSION_STR(VER)  #VER
+#define str(x) #x
+#define CONCAT_(A, B, C) A ## B ## C
+#define CONCAT(A, B, C) CONCAT_(A, B, C)
+
+/* {VER_MAJOR, decimal} {00, decimal} {VER_MINOR, decimal */
+#define    DRIVER_VERSION           CONCAT(VER_MAJOR, 00, VER_MINOR)
+#define    DRIVER_VERSION_STR(VER)  str(VER)
 
 /* To store the max vector locations */
 #define    MAX_VEC_SLT              2048

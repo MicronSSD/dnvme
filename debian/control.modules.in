@@ -1,0 +1,18 @@
+Source: dnvme
+Section: misc
+Priority: optional
+Maintainer: Chad Patel <cdpatel@micron.com>
+Build-Depends: debhelper (>= 5), bzip2
+Standards-Version: 3.8.0
+
+Package: dnvme-modules-_KVERS_
+Architecture: i386 amd64
+Depends: ${misc:Depends}
+Recommends: linux-modules-_KVERS_ | linux-image-_KVERS_
+Description: dnvme Linux kernel module
+ This package contains the dnvme loadable kernel modules for the
+ linux-image-_KVERS_ package.
+ .
+ If you compiled a custom kernel, you will most likely need to compile a
+ custom version of this module as well. The dnvme-source package has
+ been provided for this purpose.
