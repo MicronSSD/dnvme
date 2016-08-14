@@ -41,7 +41,7 @@
 #include "dnvme_irq.h"
 
 #define DRV_NAME                "dnvme"
-#define NVME_DEVICE_NAME        "nvme"
+#define NVME_DEVICE_NAME        "dnvme"
 #define BAR0_BAR1               0x0
 #define BAR2_BAR3               0x2
 #define BAR4_BAR5               0x4
@@ -66,6 +66,8 @@ long dnvme_ioctl(struct file *filp, unsigned int ioctl_num,
 
 /* Module globals */
 static int nvme_major;
+static unsigned char nvme_minor_table[256] = { 0 };
+static unsigned char nvme_minor_idx = 0;
 LIST_HEAD(metrics_dev_ll);
 static struct class *class_nvme;
 struct metrics_driver g_metrics_drv;
@@ -111,6 +113,7 @@ static int __init dnvme_init(void)
 
     /* Get a dynamically alloc'd major number for this driver */
     nvme_major = register_chrdev(0, NVME_DEVICE_NAME, &dnvme_fops);
+
     if (nvme_major < 0) {
         LOG_ERR("dnvme char device driver registration fail");
         return -ENODEV;
@@ -155,10 +158,17 @@ static int dnvme_probe(struct pci_dev *pdev, const struct pci_device_id *id)
     void __iomem *bar0 = NULL;
     void __iomem *bar1 = NULL;
     void __iomem *bar2 = NULL;
-    static int nvme_minor = 0;
-    dev_t devno = MKDEV(nvme_major, nvme_minor);
+    dev_t devno;
     struct metrics_device_list *pmetrics_device = NULL;
     int bars = 0;
+
+    for (nvme_minor_idx = 0; nvme_minor_idx < 256; nvme_minor_idx++) {
+        if (nvme_minor_table[nvme_minor_idx] == 0) {
+            break;
+        }
+    }
+
+    devno = MKDEV(nvme_major, nvme_minor_idx);
 
     /* Allocate kernel memory for our own internal tracking of this device */
     pmetrics_device = kmalloc(
@@ -244,11 +254,12 @@ static int dnvme_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 
     mutex_init(&pmetrics_device->metrics_mtx);
     pmetrics_device->metrics_device->private_dev.open_flag = 0;
-    pmetrics_device->metrics_device->private_dev.minor_no = nvme_minor;
+    pmetrics_device->metrics_device->private_dev.minor_no = nvme_minor_idx;
 
     /* Create an NVMe special device */
     pmetrics_device->metrics_device->private_dev.spcl_dev = device_create(
-        class_nvme, NULL, devno, NULL, NVME_DEVICE_NAME"%d", nvme_minor);
+        class_nvme, NULL, devno, NULL, NVME_DEVICE_NAME"%d", nvme_minor_idx);
+
     if (IS_ERR(pmetrics_device->metrics_device->private_dev.spcl_dev)) {
         err = PTR_ERR(pmetrics_device->metrics_device->private_dev.spcl_dev);
         LOG_ERR("Creation of special device file failed: %d", err);
@@ -271,7 +282,10 @@ static int dnvme_probe(struct pci_dev *pdev, const struct pci_device_id *id)
     pmetrics_device->metrics_device->public_dev.pci_device_function = 
         pdev->devfn;
     list_add_tail(&pmetrics_device->metrics_device_hd, &metrics_dev_ll);
-    nvme_minor++;
+
+    // indicate that this minor number is taken
+    nvme_minor_table[nvme_minor_idx] = 1;
+
     return 0;
 
 
@@ -355,6 +369,9 @@ static void dnvme_remove(struct pci_dev *dev)
             mutex_unlock(&pmetrics_device->metrics_mtx);
             mutex_destroy(&pmetrics_device->metrics_mtx);
             mutex_destroy(&pmetrics_device->irq_process.irq_track_mtx);
+
+            // indicate that this minor number is no longer taken
+            nvme_minor_table[pmetrics_device->metrics_device->private_dev.minor_no] = 0;
 
             device_del(pmetrics_device->metrics_device->private_dev.spcl_dev);
 
