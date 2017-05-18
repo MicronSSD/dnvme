@@ -3,7 +3,7 @@ Section: micron
 Priority: optional
 Maintainer: Chad Patel <cdpatel@micron.com>
 Standards-Version: 3.9.5
-Build-Depends: debhelper (>= 5), bzip2, dkms
+Build-Depends: debhelper (>= 10), bzip2, dkms
 Homepage: https://stash.micron.com/stash/scm/nve_tsw/dnvme.git
 
 Package: dnvme-dkms
