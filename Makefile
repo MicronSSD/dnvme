@@ -93,7 +93,7 @@ endif
 include $(KCONFIG)
 
 all:
-	    $(MAKE) -C $(KBUILD) M=$(SRC_DIR) modules
+	$(MAKE) -C $(KBUILD) M=$(SRC_DIR) modules
 
 clean:
-    	$(MAKE) -C $(KBUILD) M=$(SRC_DIR) clean
+	$(MAKE) -C $(KBUILD) M=$(SRC_DIR) clean
